@@ -191,65 +191,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: Column(
                     children: [
-                      GestureDetector(
-                      onTap: () {
-                        AppRoutes.pushControlScreen(context);
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 40.0, left: 25),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                SvgIcon.car_2,
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Texts.strControl.tr(),
-                                ),
-                              ],
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(15.0),
-                              child: SvgIcon.chevron_right,
-                            ),
-                          ],
-                        ),
-                      ),
-                      ),
 
-                  GestureDetector(
-                    onTap: () {
-                      AppRoutes.pushClimateScreen(context);
-                    },
-                    child: Padding(
-                          padding: const EdgeInsets.only(top: 40.0, left: 25),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  SvgIcon.vent,
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(
-                                      children: [
-                                        Texts.strClimate.tr(),
-                                        Texts.strInterior20.tr(),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(15.0),
-                                child: SvgIcon.chevron_right,
-                              ),
-                            ],
-                          ),
-                        ),
-                  ),
-                   Padding(
+                      MenuItem(
+                        icon: SvgIcon.vent,
+                        title: [Texts.strClimate.tr(), Texts.strInterior20.tr()],
+                        onTap: () => AppRoutes.pushClimateScreen(context),
+                      ),
+                      MenuItem(
+                        icon: SvgIcon.alarm,
+                        title: [Texts.strSchedule.tr()],
+                        onTap: () => AppRoutes.pushControlScreen(context),
+                      ),
+                      Padding(
                           padding: const EdgeInsets.only(top: 40.0, left: 25),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -282,39 +235,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               Padding(
                                 padding: const EdgeInsets.all(15.0),
-                                //child: SvgIcon.chevron_right,
                               ),
                             ],
                           ),
-                        ),
-
-                  GestureDetector(
-                    onTap: () {
-                      AppRoutes.pushControlScreen(context);
-                    },
-                    child: Padding(
-                          padding: const EdgeInsets.only(top: 40.0, left: 25),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  SvgIcon.alarm,
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Texts.strSchedule.tr(),
-                                  ),
-                                ],
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(15.0),
-                                child: SvgIcon.chevron_right,
-                              ),
-                            ],
-                          ),
-                        ),
-                  ),
-
+                      ),
 
                     ],
                   ),
@@ -344,69 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
             painter: RPSCustomPainter(),
             child: Container(
               height: 80,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      selectedCar = true;
-                      selectedPerson = false;
-                      selectedLightning = false;
-                      selectedKey = false;
-                      setState(() {});
-                      debugPrint("selectedCar");
-                    },
-                    child: BottomBarIcon(
-                      image: const AssetImage("assets/icons/ic_car.png"),
-                      isActive: selectedCar,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedLightning = true;
-                        selectedCar = false;
-                        selectedPerson = false;
-                        selectedKey = false;
-                      });
-                      debugPrint("selectedLightning");
-                    },
-                    child: BottomBarIcon(
-                      image: const AssetImage("assets/icons/ic_lightning.png"),
-                      isActive: selectedLightning,
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 50,
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      selectedCar = false;
-                      selectedPerson = false;
-                      selectedLightning = false;
-                      selectedKey = true;
-                      setState(() {});
-                    },
-                    child: BottomBarIcon(
-                      image: const AssetImage("assets/icons/ic_key.png"),
-                      isActive: selectedKey,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      selectedCar = false;
-                      selectedPerson = true;
-                      selectedLightning = false;
-                      selectedKey = false;
-                      setState(() {});
-                    },
-                    child: BottomBarIcon(
-                      image: const AssetImage("assets/icons/ic_person.png"),
-                      isActive: selectedPerson,
-                    ),
-                  ),
-                ],
-              ),
+
             ),
           ),
         ),
@@ -643,3 +505,43 @@ Path shapePath(Size size) {
 
   return path_0;
 }
+
+class MenuItem extends StatelessWidget {
+  final Widget icon;
+  final List<Widget> title;
+  final VoidCallback onTap;
+
+  MenuItem({required this.icon, required this.title, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 40.0, left: 25),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                icon,
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: title,
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: SvgIcon.chevron_right,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

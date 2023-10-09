@@ -202,12 +202,13 @@ class _TeslaLoginScreenState extends State<TeslaLoginScreen> {
               print('Vehicle Details: $vehicleDetails');
               String vehicleID = vehicleDetails['response'][0]['id'].toString();
               print('Vehicle ID: $vehicleID');
+              await wakeUp(accessToken, vehicleID);
               Map<String, dynamic> vehicleData = await getVehicleData(accessToken, vehicleID);
               print('Vehicle Data: $vehicleData');
               Future<double?> vehicleRange = getVehicleRange(vehicleData);
               print('Vehicle range: $vehicleRange');
               //todo: handle if accesstoken is null and show an intro error screen
-              wakeUp(accessToken, vehicleID);
+
 
               // Then navigate to a new screen
               /*Navigator.push(

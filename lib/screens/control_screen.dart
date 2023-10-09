@@ -24,6 +24,33 @@ class ControlScreen extends StatefulWidget {
 
 class _ControlScreenState extends State<ControlScreen> {
   int volume = 0;
+  bool driverSeatWarming = false;
+  bool passengerSeatWarming = false;
+
+  Widget seatWarmingButton(bool isActive, VoidCallback onPressed, String label) {
+    return Column(
+      children: [
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            primary: isActive ? Colors.deepOrange : AppColors.backgroundDark,
+            shape: CircleBorder(),
+            elevation: 5.0,
+          ),
+          onPressed: onPressed,
+          child: Icon(
+            Icons.event_seat,
+            size: 40.0,
+            color: isActive ? Colors.white : Colors.grey,
+          ),
+        ),
+        SizedBox(height: 10.0),
+        Text(
+          label,
+          style: TextStyle(color: Colors.white, fontSize: 16.0),
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,29 +99,44 @@ class _ControlScreenState extends State<ControlScreen> {
                 ),
                 Expanded(
                   flex: 2,
-                  child: Stack(
-                    children: [
-                      const CustomButtonSlider(),
-                      CircularSlider(
-                        onAngleChanged: (angle) {
-                          volume = ((angle / (3.14 * 2)) * 51).toInt();
-                          setState(() {});
-                        },
-                      ),
-                      Center(
-                        child: Text(
-                          "$volume ° C",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.w600,
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 100.0),  // Adjusting position
+                    child: Stack(
+                      children: [
+                        CustomButtonSlider(
+                          onAngleChanged: (angle) {
+                            int calculatedTemp = ((angle / (3.14 * 2)) * 51).toInt();
+                            if (calculatedTemp < 16) {
+                              setState(() {
+                                volume = 16;
+                              });
+                            } else if (calculatedTemp > 27) {
+                              setState(() {
+                                volume = 27;
+                              });
+                            } else {
+                              setState(() {
+                                volume = calculatedTemp;
+                              });
+                            }
+                          },
+                        ),
+                        Center(
+                          child: Text(
+                            "$volume ° C",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-                Expanded(
+
+                /*Expanded(
                   flex: 3,
                   child: Column(
                     children: [
@@ -140,11 +182,45 @@ class _ControlScreenState extends State<ControlScreen> {
                       ),
                     ],
                   ),
+                ),*/
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          seatWarmingButton(
+                            driverSeatWarming,
+                                () {
+                              setState(() {
+                                driverSeatWarming = !driverSeatWarming;
+                              });
+                            },
+                            "Driver Seat",
+                          ),
+                          seatWarmingButton(
+                            passengerSeatWarming,
+                                () {
+                              setState(() {
+                                passengerSeatWarming = !passengerSeatWarming;
+                              });
+                            },
+                            "Passenger Seat",
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
+
+
             const CustomBottomBar(),
           ],
-        ));
+        ),
+        );
   }
 }
