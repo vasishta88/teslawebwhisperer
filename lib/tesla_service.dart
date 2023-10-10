@@ -46,7 +46,44 @@ Future<Map<String, dynamic>> getVehicles(String accessToken) async {
   }
 }
 
+Future<Map<String, dynamic>> getVehicleData(String accessToken, String vehicleId) async {
+  const maxRetries = 3;  // Define how many times you want to retry.
+  int retryCount = 0;
 
+  while (retryCount < maxRetries) {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/1/vehicles/$vehicleId/vehicle_data'),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseBody = jsonDecode(response.body);
+        if (responseBody.containsKey('response')) {
+          return responseBody['response'];
+        } else {
+          throw Exception('Unexpected response format');
+        }
+      } else {
+        throw Exception('Failed to fetch vehicle data: ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      if (retryCount == maxRetries - 1) {
+        throw e;  // If we've reached the maximum number of retries, throw the exception.
+      }
+      retryCount++;
+      await Future.delayed(Duration(seconds: 2));  // Introducing a delay before retrying.
+    }
+  }
+
+  throw Exception('Failed to fetch vehicle data after $maxRetries attempts.');
+}
+
+
+/*
 Future<Map<String, dynamic>> getVehicleData(String accessToken, String vehicleId) async {
   final response = await http.get(
     Uri.parse('$_baseUrl/api/1/vehicles/$vehicleId/vehicle_data'),
@@ -67,6 +104,8 @@ Future<Map<String, dynamic>> getVehicleData(String accessToken, String vehicleId
     throw Exception('Failed to fetch vehicle data: ${response.reasonPhrase}');
   }
 }
+
+*/
 
 /*
 Future<double?> getVehicleRange(String? vehicleId, String accessToken) async {

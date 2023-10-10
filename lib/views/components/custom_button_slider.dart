@@ -1,69 +1,95 @@
 import 'dart:math';
-
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class CustomButtonSlider extends StatefulWidget {
   final Function(double) onAngleChanged;
 
-  const CustomButtonSlider({
-    required this.onAngleChanged,
-    Key? key,
-  }) : super(key: key);
+  const CustomButtonSlider({Key? key, required this.onAngleChanged})
+      : super(key: key);
 
   @override
   _CustomButtonSliderState createState() => _CustomButtonSliderState();
 }
 
 class _CustomButtonSliderState extends State<CustomButtonSlider> {
-  double _angle = 0.0;  // Initialize with a default value
+  double _currentAngle = 0;
+  double _temperature = 16.0; // Placeholder starting temperature
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onPanUpdate: (details) {
-        Offset centerOfSlider = Offset(340 / 2, 340 / 2);
-        final touchPositionFromCenter = details.localPosition - centerOfSlider;
-        _angle = touchPositionFromCenter.direction;
-
-        widget.onAngleChanged(_angle);
-        setState(() {});
+        final center = Offset(340 / 2, 340 / 2);
+        final delta = details.localPosition - center;
+        final r = atan2(delta.dy, delta.dx);
+        if (r > -pi / 2)  {
+          setState(() {
+            _currentAngle = r;
+            widget.onAngleChanged(r);
+            // Calculating temperature based on angle
+            _temperature = 16 + ((_currentAngle + pi / 2) / pi) * 11;
+            // Rounding to nearest 0.5 value
+            _temperature = (2.0 * _temperature).round() / 2.0;
+            if (_temperature > 27) _temperature = 27;
+            if (_temperature < 16) _temperature = 16;
+          });
+        }
       },
-      child: CustomPaint(
-        painter: _SliderPainter(_angle),
-        child: Center(
-          child: Container(
-            height: 340,
-            width: 340,
-            decoration: BoxDecoration(
-              color: Color(0xFF292D31),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  offset: Offset(-26, -26),
-                  blurRadius: 60,
-                  color: Color(0xff3a4145),
-                ),
-                BoxShadow(
-                  offset: Offset(10, 10),
-                  blurRadius: 20,
-                  color: Color(0xFF13151A),
-                ),
-              ],
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xff2B2F33),
-                  Color(0xff101113),
-                ],
+      onTapDown: (details) {
+        // Handling tap to adjust the slider position
+        final center = Offset(340 / 2, 340 / 2);
+        final delta = details.localPosition - center;
+        final r = atan2(delta.dy, delta.dx);
+        if (r > -pi / 2) {
+          setState(() {
+            _currentAngle = r;
+            widget.onAngleChanged(r);
+            // Calculating temperature based on angle
+            _temperature = 16 + ((_currentAngle + pi / 2) / pi) * 11;
+            // Rounding to nearest 0.5 value
+            _temperature = (2.0 * _temperature).round() / 2.0;
+            if (_temperature > 27) _temperature = 27;
+            if (_temperature < 16) _temperature = 16;
+          });
+        }
+      },
+      child: Center(
+        child: Container(
+          height: 340,
+          width: 340,
+          decoration: const BoxDecoration(
+            color: Color(0xFF292D31),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                offset: Offset(-26, -26),
+                blurRadius: 60,
+                color: Color(0xff3a4145),
               ),
+              BoxShadow(
+                offset: Offset(10, 10),
+                blurRadius: 20,
+                color: Color(0xFF13151A),
+              ),
+            ],
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xff2B2F33),
+                Color(0xff101113),
+              ],
             ),
-            child: Center(
-              child: ClipOval(
+          ),
+          child: Stack(
+            children: [
+              // Inner circle
+              Center(
                 child: Container(
-                  width: 240,
-                  height: 240,
-                  decoration: BoxDecoration(
+                  width: 260,
+                  height: 260,
+                  decoration: const BoxDecoration(
                     color: Color(0xFF292D31),
                     shape: BoxShape.circle,
                     boxShadow: [
@@ -89,7 +115,21 @@ class _CustomButtonSliderState extends State<CustomButtonSlider> {
                   ),
                 ),
               ),
-            ),
+              CustomPaint(
+                size: Size(340, 340),
+                painter: _SliderPainter(_currentAngle),
+              ),
+              Center(
+                child: Text(
+                  "${_temperature}°C",
+                  style: TextStyle(
+                    fontSize: 28,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -99,21 +139,26 @@ class _CustomButtonSliderState extends State<CustomButtonSlider> {
 
 class _SliderPainter extends CustomPainter {
   final double angle;
+  final Paint trackPaint;
 
-  _SliderPainter(this.angle);
+  _SliderPainter(this.angle)
+      : trackPaint = Paint()
+    ..color = Colors.blue
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 10;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final Offset center = Offset(size.width / 2, size.height / 2);
-    final double radius = size.width / 2;
-    final Paint bluePaint = Paint()
-      ..color = Colors.blue
-      ..strokeWidth = 10
-      ..style = PaintingStyle.stroke;
-    final double angleInRadian = 5 * pi / 4 - angle;  // Adjusts starting position of the slider
-    final double sweepAngle = 3 * pi / 2 * angleInRadian / (2 * pi);
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width / 2) - 70; // Adjusted to bring closer
 
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), 5 * pi / 4, sweepAngle, false, bluePaint);
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -pi / 2,
+      angle + pi / 2,
+      false,
+      trackPaint,
+    );
   }
 
   @override
@@ -121,3 +166,4 @@ class _SliderPainter extends CustomPainter {
     return true;
   }
 }
+

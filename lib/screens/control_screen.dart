@@ -86,7 +86,7 @@ class _ControlScreenState extends State<ControlScreen> {
                         const Spacer(),
                         CustomButton(
                           widget: Center(
-                            child: SvgIcon.settings.copyWith(
+                            child: SvgIcon.person.copyWith(
                               newWidth: 13,
                               newHeight: 22,
                               newColor: AppColors.textGrey60,
@@ -101,40 +101,27 @@ class _ControlScreenState extends State<ControlScreen> {
                   flex: 2,
                   child: Padding(
                     padding: EdgeInsets.only(top: 100.0),  // Adjusting position
-                    child: Stack(
-                      children: [
-                        CustomButtonSlider(
-                          onAngleChanged: (angle) {
-                            int calculatedTemp = ((angle / (3.14 * 2)) * 51).toInt();
-                            if (calculatedTemp < 16) {
-                              setState(() {
-                                volume = 16;
-                              });
-                            } else if (calculatedTemp > 27) {
-                              setState(() {
-                                volume = 27;
-                              });
-                            } else {
-                              setState(() {
-                                volume = calculatedTemp;
-                              });
-                            }
-                          },
-                        ),
-                        Center(
-                          child: Text(
-                            "$volume ° C",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: CustomButtonSlider(
+                      onAngleChanged: (angle) {
+                        int calculatedTemp = ((angle / (3.14 * 2)) * 11.5 + 16).toInt(); // Adjusted the multiplier to 11.5
+                        if (calculatedTemp < 16) {
+                          setState(() {
+                            volume = 16;
+                          });
+                        } else if (calculatedTemp > 27) {
+                          setState(() {
+                            volume = 27;
+                          });
+                        } else {
+                          setState(() {
+                            volume = calculatedTemp;
+                          });
+                        }
+                      },
                     ),
                   ),
                 ),
+
 
                 /*Expanded(
                   flex: 3,
