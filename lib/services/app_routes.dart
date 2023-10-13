@@ -21,12 +21,28 @@ class HomeScreenArguments {
 }
 
 
+class ClimateScreenArguments {
+  final String accessToken;
+  final Map<String, dynamic> userDetails;
+  final Map<String, dynamic> vehicleData;
+  final String vehicleID;
+
+  ClimateScreenArguments({
+    required this.accessToken,
+    required this.userDetails,
+    required this.vehicleData,
+    required this.vehicleID,
+  });
+}
+
+
+
 class AppRoutes {
   AppRoutes._();
 
   static final routes = {
     ChargerScreen.id: (context) => const ChargerScreen(),
-    ClimateScreen.id: (context) => const ClimateScreen(),
+    //ClimateScreen.id: (context) => const ClimateScreen(),
     ControlScreen.id: (context) => const ControlScreen(),
 
     // HomeScreen.id: (context) {
@@ -34,9 +50,18 @@ class AppRoutes {
     // return HomeScreen(accessToken: token);
     // }
 
+    ClimateScreen.id: (context) {
+      final args = ModalRoute.of(context)!.settings.arguments as ClimateScreenArguments;
+      return ClimateScreen(
+        accessToken: args.accessToken,
+        userDetails: args.userDetails,
+        vehicleData: args.vehicleData,
+        vehicleID: args.vehicleID,
+      );
+    },
 
 
-  HomeScreen.id: (context) {
+    HomeScreen.id: (context) {
   final args = ModalRoute.of(context)!.settings.arguments as HomeScreenArguments;
   return HomeScreen(
   accessToken: args.accessToken,
@@ -58,16 +83,36 @@ class AppRoutes {
     Navigator.pushReplacementNamed(context, HomeScreen.id);
   }
 
-  static void pushClimateScreen(BuildContext context) {
-    Navigator.pushNamed(context, ControlScreen.id);
+  static void pushClimateScreen(
+      BuildContext context, {
+        required String accessToken,
+        required Map<String, dynamic> userDetails,
+        required Map<String, dynamic> vehicleData,
+        required String vehicleID,
+      }) {
+    Navigator.pushNamed(
+      context,
+      ClimateScreen.id,
+      arguments: ClimateScreenArguments(
+        accessToken: accessToken,
+        userDetails: userDetails,
+        vehicleData: vehicleData,
+        vehicleID: vehicleID,
+      ),
+    );
   }
+
+/*
+  static void pushClimateScreen(BuildContext context) {
+    Navigator.pushNamed(context, ClimateScreen.id);
+  }*/
 
   static void pushChargeScreen(BuildContext context) {
     Navigator.pushNamed(context, ChargerScreen.id);
   }
 
   static void pushControlScreen(BuildContext context) {
-    Navigator.pushNamed(context, ClimateScreen.id);
+    Navigator.pushNamed(context, ControlScreen.id);
   }
 
   static void pushIntroScreen(BuildContext context) {

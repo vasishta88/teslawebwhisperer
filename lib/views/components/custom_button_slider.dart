@@ -1,11 +1,13 @@
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:teslawebwhisperer/tesla_service.dart';
 
 class CustomButtonSlider extends StatefulWidget {
   final Function(double) onAngleChanged;
+  final Map<String, dynamic> vehicleData;
 
-  const CustomButtonSlider({Key? key, required this.onAngleChanged})
+  const CustomButtonSlider({Key? key, required this.onAngleChanged, required this.vehicleData})
       : super(key: key);
 
   @override
@@ -14,10 +16,25 @@ class CustomButtonSlider extends StatefulWidget {
 
 class _CustomButtonSliderState extends State<CustomButtonSlider> {
   double _currentAngle = 0;
-  double _temperature = 16.0; // Placeholder starting temperature
+  double _temperature = 16; // Make it nullable for now
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeTemperature();
+  }
+
+  Future<void> _initializeTemperature() async {
+    double? temp = await getDriverTemp(widget.vehicleData);
+    setState(() {
+      _temperature = temp ?? 0.0;  // Use the fetched temperature or default to 0.0
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
+    //double _temperature = getDriverTemp(widget.vehicleData) as double; // Placeholder starting temperature
     return GestureDetector(
       onPanUpdate: (details) {
         final center = Offset(340 / 2, 340 / 2);

@@ -195,13 +195,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       MenuItem(
                         icon: SvgIcon.vent,
                         title: [Texts.strClimate.tr(), Texts.strInterior20.tr()],
-                        onTap: () => AppRoutes.pushClimateScreen(context),
+                        onTap: () => AppRoutes.pushClimateScreen(
+                          context,
+                          accessToken: widget.accessToken,
+                          userDetails: widget.userDetails,
+                          vehicleData: widget.vehicleData,
+                          vehicleID: widget.vehicleID,
+                        ),
                       ),
-                      MenuItem(
-                        icon: SvgIcon.alarm,
-                        title: [Texts.strSchedule.tr()],
-                        onTap: () => AppRoutes.pushControlScreen(context),
-                      ),
+
                       Padding(
                           padding: const EdgeInsets.only(top: 40.0, left: 25),
                           child: Row(

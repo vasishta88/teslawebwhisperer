@@ -32,7 +32,7 @@ class _ControlScreenState extends State<ControlScreen> {
       children: [
         ElevatedButton(
           style: ElevatedButton.styleFrom(
-            primary: isActive ? Colors.deepOrange : AppColors.backgroundDark,
+            backgroundColor: isActive ? Colors.deepOrange : AppColors.backgroundDark,
             shape: CircleBorder(),
             elevation: 5.0,
           ),
@@ -94,30 +94,6 @@ class _ControlScreenState extends State<ControlScreen> {
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 100.0),  // Adjusting position
-                    child: CustomButtonSlider(
-                      onAngleChanged: (angle) {
-                        int calculatedTemp = ((angle / (3.14 * 2)) * 11.5 + 16).toInt(); // Adjusted the multiplier to 11.5
-                        if (calculatedTemp < 16) {
-                          setState(() {
-                            volume = 16;
-                          });
-                        } else if (calculatedTemp > 27) {
-                          setState(() {
-                            volume = 27;
-                          });
-                        } else {
-                          setState(() {
-                            volume = calculatedTemp;
-                          });
-                        }
-                      },
                     ),
                   ),
                 ),

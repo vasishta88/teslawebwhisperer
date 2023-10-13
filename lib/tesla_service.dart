@@ -220,6 +220,30 @@ Future<double?> getVehicleRange(Map<String, dynamic> vehicleData) async {
   }
 }
 
+Future<double?> getDriverTemp(Map<String, dynamic> vehicleData) async {
+  if (vehicleData.containsKey('climate_state') && vehicleData['climate_state'].containsKey('driver_temp_setting')) {
+    return vehicleData['climate_state']['driver_temp_setting'].toDouble();
+  } else {
+    throw Exception('Failed to fetch driver temp from the data');
+  }
+}
+
+Future<int?> getDriverSeatHeater(Map<String, dynamic> vehicleData) async {
+  if (vehicleData.containsKey('climate_state') && vehicleData['climate_state'].containsKey('seat_heater_left')) {
+    return vehicleData['climate_state']['seat_heater_left'].toInt();
+  } else {
+    throw Exception('Failed to fetch driver seat heater from the data');
+  }
+}
+
+Future<int?> getPassengerSeatHeater(Map<String, dynamic> vehicleData) async {
+  if (vehicleData.containsKey('climate_state') && vehicleData['climate_state'].containsKey('seat_heater_right')) {
+    return vehicleData['climate_state']['seat_heater_right'].toInt();
+  } else {
+    throw Exception('Failed to fetch passenger seat heater from the data');
+  }
+}
+
 /*
 Future<bool> getLockedState(Map<String, dynamic> vehicleData) async {
   if (vehicleData.containsKey('vehicle_state') && vehicleData['vehicle_state'].containsKey('locked')) {
@@ -451,6 +475,42 @@ Future<bool> turnClimateOff(String accessToken, String vehicleId) async {
     throw Exception('Failed to auto_conditioning_stop: ${response.reasonPhrase}');
   }
 }
+
+
+Future<bool> remoteSeatHeater(String accessToken, String vehicleId, int heater, int level) async {
+
+  print('remote seat heater accesstoken: $accessToken');
+  print('remote seat heater vehicleID: $vehicleId');
+
+  final response = await http.post(
+    Uri.parse('$_baseUrl/api/1/vehicles/$vehicleId/command/remote_seat_heater_request'),
+    headers: {
+      'Authorization': 'Bearer $accessToken',
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'heater': heater,
+      'level': level,
+    }),
+  );
+
+  print('remote seat heater API Response: ${response.body}');
+  print('remote seat heater API code: ${response.statusCode}');
+
+
+  if (response.statusCode == 200) {
+    final responseBody = jsonDecode(response.body);
+    if (responseBody['response']['result'] == true) {
+      return true;
+    } else {
+      throw Exception('Failed to remote_seat_heater: ${responseBody['response']['reason']}');
+    }
+  } else {
+    throw Exception('Failed to remote_seat_heater: ${response.reasonPhrase}');
+  }
+}
+
+
 
 
 Future<bool> turnSentryOff(String accessToken, String vehicleId) async {
