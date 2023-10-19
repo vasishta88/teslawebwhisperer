@@ -348,8 +348,8 @@ Future<bool> setTemperature(String accessToken, String vehicleId, double driverT
       'Content-Type': 'application/json',
     },
     body: jsonEncode({
-      'driver_temp': driverTemp,
-      'passenger_temp': passengerTemp,
+      'driver_temp': driverTemp.round(),
+      'passenger_temp': passengerTemp.round(),
     }),
   );
 
