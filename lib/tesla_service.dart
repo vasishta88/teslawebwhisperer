@@ -355,7 +355,7 @@ Future<bool> setTemperature(String accessToken, String vehicleId, double driverT
 
   if (response.statusCode == 200) {
     final responseBody = jsonDecode(response.body);
-    if (responseBody['result'] == true) {
+    if (responseBody['response']['result'] == true) {
       return true;
     } else {
       throw Exception('Failed to set temperature: ${responseBody['reason']}');

@@ -71,7 +71,7 @@ class _ClimateScreenState extends State<ClimateScreen> {
     volume += adjustment;
 
     // Round to the nearest 0.5 increment
-    volume = (volume * 2).roundToDouble() / 2;
+    //todo: check this - volume = (volume * 2).roundToDouble() / 2;
 
     // Make sure volume stays within bounds
     if (volume < 16) volume = 16;
@@ -216,7 +216,7 @@ class _ClimateScreenState extends State<ClimateScreen> {
             double driverSeatLeft = constraints.maxWidth * 0.52;  // 25% from left
 
             double passengerSeatTop = constraints.maxHeight * 0.45;  // 20% from top
-            double passengerSeatRight = constraints.maxWidth * 0.28;  // 25% from right
+            double passengerSeatRight = constraints.maxWidth * 0.30;  // 25% from right
 
           return Stack(
             children: [
@@ -354,7 +354,9 @@ class _ClimateScreenState extends State<ClimateScreen> {
                                 CupertinoButton(
                                   onPressed: () {},
                                   child: GestureDetector(
-                                    onTap: () {_adjustTemperature(-0.5);},
+                                    onTap: () {setState(() {
+                                      _adjustTemperature(-0.5);
+                                    });},
                                     child: const Icon(
                                       CupertinoIcons.back,
                                       color: Colors.white,
@@ -378,7 +380,9 @@ class _ClimateScreenState extends State<ClimateScreen> {
                                     color: Colors.white,
                                     size: 30,
                                   ),
-                                  onPressed: () {_adjustTemperature(0.5);},
+                                  onPressed: () {setState(() {
+                                    _adjustTemperature(0.5);
+                                  });},
                                 ),
                                 const Icon(
                                   CupertinoIcons.airplane,
