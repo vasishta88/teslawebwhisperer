@@ -44,6 +44,8 @@ class _ClimateScreenState extends State<ClimateScreen> {
   Timer? _debounceTimer;
   bool? isClimateOn;
   bool isLoading = false;
+  bool isTemperatureAdjusted = false;  // Add a flag to indicate if temperature was manually adjusted
+
 
 
   int? driverSeatHeaterLevel;
@@ -57,29 +59,34 @@ class _ClimateScreenState extends State<ClimateScreen> {
   }
 
   Future<void> _fetchClimateState() async {
-    isClimateOn = await getClimateState(widget.accessToken, widget.vehicleID);
-    volume = (await getDriverTemp(widget.vehicleData))!;
-    setState(() {});
+    if (isTemperatureAdjusted) {
+      // If we have a pending temperature adjustment, return to avoid overwriting the UI
+      return;
+    }
+
+    bool newIsClimateOn = await getClimateState(widget.accessToken, widget.vehicleID);
+    double newVolume = (await getDriverTemp(widget.vehicleData))!;
+
+    setState(() {
+      isClimateOn = newIsClimateOn;
+      volume = newVolume;
+    });
+
   }
 
-
-  Future<void> _toggleClimate() async {
-    await _toggleFeature( turnClimateOff, turnClimateOn, 'Climate');
-  }
 
   void _adjustTemperature(double adjustment) {
+
     volume += adjustment;
-
-    // Round to the nearest 0.5 increment
-    //todo: check this - volume = (volume * 2).roundToDouble() / 2;
-
-    // Make sure volume stays within bounds
-    if (volume < 16) volume = 16;
-    if (volume > 27) volume = 27;
+    volume = (volume * 2).roundToDouble() / 2;
+    volume = volume.clamp(16, 27);
 
     if (isClimateOn == false) {
       _toggleClimate();
     }
+
+    // Set the flag to true since we are adjusting the temperature
+    isTemperatureAdjusted = true;
 
     _debounceTimer?.cancel();
     _debounceTimer = Timer(Duration(seconds: 1), () {
@@ -89,11 +96,13 @@ class _ClimateScreenState extends State<ClimateScreen> {
   }
 
 
+  Future<void> _toggleClimate() async {
+    await _toggleFeature( turnClimateOff, turnClimateOn, 'Climate');
+  }
+
+
   Future<void> _toggleFeature(Function deactivate, Function activate, String featureName) async {
     if (isLoading) return;
-
-    // Fetch the most recent state
-    await _fetchClimateState();
 
     setState(() {
       isLoading = true;
@@ -107,15 +116,13 @@ class _ClimateScreenState extends State<ClimateScreen> {
         result = await activate(widget.accessToken, widget.vehicleID);
       }
 
-      // Fetch the state again after toggling to ensure UI reflects the most recent state
-      //await _fetchClimateState();
+      // Update the isClimateOn state based on the action taken
+      setState(() {
+        isClimateOn = result;
+      });
 
-      // Explicitly update isClimateOn based on the result
-      if (featureName == 'Climate') {
-        setState(() {
-          isClimateOn = !isClimateOn!;
-        });
-      }
+      // Now fetch the most recent state to ensure UI reflects the most recent state
+      await _fetchClimateState();
 
     } catch (error) {
       print('Error during toggle $featureName: $error');
@@ -221,9 +228,7 @@ class _ClimateScreenState extends State<ClimateScreen> {
           return Stack(
             children: [
               //Top bar
-              Expanded(
-                flex: 1,
-                child: Padding(
+               Padding(
                   padding:
                   const EdgeInsets.only(top: 70, left: 36, right: 36),
                   child: Row(
@@ -257,7 +262,6 @@ class _ClimateScreenState extends State<ClimateScreen> {
                     ],
                   ),
                 ),
-              ),
 
               // Position driver seat button
               Positioned(
@@ -330,9 +334,8 @@ class _ClimateScreenState extends State<ClimateScreen> {
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
                               children: [
-
+                                // Power toggle button
                                 isClimateOn == null
                                     ? CircularProgressIndicator()
                                     : IconButton(
@@ -343,47 +346,51 @@ class _ClimateScreenState extends State<ClimateScreen> {
                                   ),
                                   onPressed: () async {
                                     await _toggleClimate();
-                                    setState(() {
+                                    /*setState(() {
                                       //isClimateOn = !isClimateOn!;
                                       print('After: $isClimateOn');
+                                    });*/
+                                  },
+                                ),
+
+                                // Decrease temperature button
+                                IconButton(
+                                  icon: const Icon(
+                                    CupertinoIcons.minus_circle,
+                                    color: Colors.white,
+                                    size: 30,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _adjustTemperature(-0.5);
                                     });
                                   },
                                 ),
 
-
-                                CupertinoButton(
-                                  onPressed: () {},
-                                  child: GestureDetector(
-                                    onTap: () {setState(() {
-                                      _adjustTemperature(-0.5);
-                                    });},
-                                    child: const Icon(
-                                      CupertinoIcons.back,
-                                      color: Colors.white,
-                                      size: 30,
-                                    ),
+                                // Temperature display
+                                Text(
+                                  "$volume",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 34,
                                   ),
                                 ),
 
-                                GestureDetector(
-                                  onTap: () {
-                                  },
-                                  child: Text(
-                                    "$volume",
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 34),
-                                  ),
-                                ),
+                                // Increase temperature button
                                 IconButton(
                                   icon: const Icon(
-                                    CupertinoIcons.right_chevron,
+                                    CupertinoIcons.add_circled,
                                     color: Colors.white,
                                     size: 30,
                                   ),
-                                  onPressed: () {setState(() {
-                                    _adjustTemperature(0.5);
-                                  });},
+                                  onPressed: () {
+                                    setState(() {
+                                      _adjustTemperature(0.5);
+                                    });
+                                  },
                                 ),
+
+                                // Additional icon (purpose unclear from this snippet)
                                 const Icon(
                                   CupertinoIcons.airplane,
                                   color: Color(0xffEBEBF5),
@@ -391,19 +398,7 @@ class _ClimateScreenState extends State<ClimateScreen> {
                                 ),
                               ],
                             ),
-                            const Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "On",
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                Text(
-                                  "Vent",
-                                  style: TextStyle(color: Color(0xffEBEBF5)),
-                                ),
-                              ],
-                            ),
+
                           ],
                         ),
                       ),

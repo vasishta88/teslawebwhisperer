@@ -13,7 +13,6 @@ import 'package:teslawebwhisperer/views/components/custom_controller_menu.dart';
 import 'package:teslawebwhisperer/services/themes/texts.dart';
 import 'package:teslawebwhisperer/services/themes/text_styles.dart';
 
-import 'package:flutter/material.dart';
 import 'package:teslawebwhisperer/tesla_service.dart';
 import 'package:teslawebwhisperer/widgets.dart';
 
@@ -517,7 +516,7 @@ class MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.only(top: 40.0, left: 25),

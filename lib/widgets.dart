@@ -44,9 +44,10 @@ class BatteryRangeDisplay extends StatelessWidget {
             style: TextStyle(color: Colors.white),
           );
         } else if (snapshot.hasData) {
+          int wholeNumberRange = snapshot.data!.round();
           return Text(
-            "${snapshot.data!} miles",  // Assuming the unit is miles
-            style: TextStyle(color: Colors.white),
+            "$wholeNumberRange miles",  // Assuming the unit is miles
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           );
         } else {
           return Text(
