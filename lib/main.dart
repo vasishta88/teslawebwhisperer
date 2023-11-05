@@ -14,6 +14,7 @@ import 'tesla_service.dart';
 import 'data_screen.dart';
 import 'package:teslawebwhisperer/screens/home_screen.dart';
 import 'locale_app.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 //void main() => runApp(MyApp());
 
@@ -45,6 +46,9 @@ class _TeslaLoginScreenState extends State<TeslaLoginScreen> {
   late WebViewController controller;
 
   final cookieManager = WebviewCookieManager();
+
+  final authTokenProvider = AuthTokenProvider();
+
 
 
   final http.Client client = http.Client();
@@ -189,47 +193,114 @@ class _TeslaLoginScreenState extends State<TeslaLoginScreen> {
               print('email2: $emailInput');
               print('password2: $passwordInput');
 
+
+
               final authorizationCode = await obtainAuthorizationCode(hiddenInputsDynamic,cookies, emailInput.toString(), passwordInput.toString(), codeChallenge!);
               print('authcode: $authorizationCode');
+
+              /*
               List<String>? tokens = await exchangeAuthorizationCodeForBearerToken(authorizationCode!, codeVerifier);
               final accessToken = tokens![0];
               final refreshToken = tokens![1];
+              final expiresIn = tokens![2];
               print('accessToken: $accessToken');
               print('refreshToken: $refreshToken');
-              Map<String, dynamic> userDetails = await getUserDetails(accessToken); //todo: Get refresh token before this if access token expired
-              print('User Details: $userDetails');
-              Map<String, dynamic> vehicleDetails = await getVehicles(accessToken); //todo: Get refresh token before this if access token expired
-              print('Vehicle Details: $vehicleDetails');
-              String vehicleID = vehicleDetails['response'][0]['id'].toString();
-              print('Vehicle ID: $vehicleID');
-              await wakeUp(accessToken, vehicleID);
-              Map<String, dynamic> vehicleData = await getVehicleData(accessToken, vehicleID);
-              print('Vehicle Data: $vehicleData');
-              Future<double?> vehicleRange = getVehicleRange(vehicleData);
-              print('Vehicle range: $vehicleRange');
-              //todo: handle if accesstoken is null and show an intro error screen
+
+              await authTokenProvider.storeTokenData(accessToken, refreshToken, expiresIn); */
 
 
-              // Then navigate to a new screen
-              /*Navigator.push(
+
+
+              Map<String, dynamic>? tokenData = await exchangeAuthorizationCodeForBearerToken(authorizationCode!, codeVerifier);
+              if (tokenData != null) {
+                final accessToken = tokenData['access_token'];
+                final refreshToken = tokenData['refresh_token'];
+                final expiresIn = tokenData['expires_in'].toInt(); // Make sure this is an integer
+                print('accessToken: $accessToken');
+                print('refreshToken: $refreshToken');
+                print('expiresIn: $expiresIn');
+
+                if (accessToken is String && refreshToken is String && expiresIn is int) {
+                  await authTokenProvider.storeTokenData(accessToken, refreshToken, expiresIn);
+                } else {
+                  // Handle the situation where the types aren't what's expected
+                }
+              } else {
+                // Handle the error if tokenData is null
+              }
+
+
+              // Only proceed if accessToken is not null and not expired
+              String? currentAccessToken = await authTokenProvider.getAccessToken();
+
+              // Check if the access token is expired or about to expire
+              if (currentAccessToken == null || await authTokenProvider.isAccessTokenExpired()) {
+                // If expired or null, refresh it
+                final String? refreshToken = await authTokenProvider.getRefreshToken();
+                if (refreshToken != null) {
+                  final newTokenData = await refreshAccessToken(refreshToken);
+                  if (newTokenData != null && newTokenData['access_token'] is String) {
+                    // Update the stored token data with the new tokens
+                    await authTokenProvider.storeTokenData(
+                      newTokenData['access_token'],
+                      newTokenData['refresh_token'],
+                      newTokenData['expires_in'],
+                    );
+                    // Use the new access token
+                    currentAccessToken = newTokenData['access_token'];
+                  } else {
+                    // Handle failure to refresh the access token
+                    showErrorDialog(context);
+                    return NavigationDecision.prevent;
+                  }
+                } else {
+                  // Refresh token is null, which should not happen, show an error dialog
+                  showErrorDialog(context);
+                  return NavigationDecision.prevent;
+                }
+              }
+
+
+                // accessToken is not null, safe to proceed.
+
+
+                Map<String, dynamic> userDetails = await getUserDetails(accessToken!); //todo: Get refresh token before this if access token expired and handle MFA later
+                print('User Details: $userDetails');
+                Map<String, dynamic> vehicleDetails = await getVehicles(
+                    accessToken!); //todo: Get refresh token before this if access token expired
+                print('Vehicle Details: $vehicleDetails');
+                String vehicleID = vehicleDetails['response'][0]['id']
+                    .toString();
+                print('Vehicle ID: $vehicleID');
+                await wakeUp(accessToken!, vehicleID);
+                Map<String, dynamic> vehicleData = await getVehicleData(
+                    accessToken!, vehicleID);
+                print('Vehicle Data: $vehicleData');
+                Future<double?> vehicleRange = getVehicleRange(vehicleData);
+                print('Vehicle range: $vehicleRange');
+                //todo: handle if accesstoken is null and show an intro error screen
+
+
+                // Then navigate to a new screen
+                /*Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => HomeScreen(accessToken: accessToken)),
               );
 
                */
 
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => HomeScreen(
-                    accessToken: accessToken,
-                    userDetails: userDetails,
-                    vehicleData: vehicleData,
-                    vehicleID: vehicleID,
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        HomeScreen(
+                          accessToken: accessToken!,
+                          userDetails: userDetails,
+                          vehicleData: vehicleData,
+                          vehicleID: vehicleID,
+                        ),
                   ),
-                ),
-              );
-
+                );
 
 
 
@@ -324,7 +395,7 @@ Future<String?> obtainAuthorizationCode(Map<String, dynamic> hiddenInputs, Strin
 
 }
 
-Future<List<String>?>? exchangeAuthorizationCodeForBearerToken(String authorizationCode, String codeVerifier) async {
+Future<Map<String, dynamic>?> exchangeAuthorizationCodeForBearerToken(String authorizationCode, String codeVerifier) async {
   final response = await http.post(
     Uri.parse('https://auth.tesla.com/oauth2/v3/token'),
     headers: {'Content-Type': 'application/json'},
@@ -344,7 +415,17 @@ Future<List<String>?>? exchangeAuthorizationCodeForBearerToken(String authorizat
     final accessToken = responseBody['access_token'];
     print('AccessToken in 200 : $accessToken');
     final refreshToken = responseBody['refresh_token'];
-    return [accessToken,refreshToken];
+    final expiresIn = responseBody['expires_in']; // Capture the expiry time
+    // Calculate the expiration DateTime
+    final expirationTime = DateTime.now().add(Duration(seconds: expiresIn));
+
+    return {
+      'accessToken': accessToken,
+      'refreshToken': refreshToken,
+      'expiresIn': expiresIn, // Keep it as an integer
+      'expirationTime': expirationTime.toIso8601String(), // Convert to ISO-8601 string for easy storage
+    };
+    //return [accessToken,refreshToken, expiresIn];
   } else {
     print('Failed to exchange authorization code for bearer token');
     print('Response status: ${response.statusCode}');
@@ -422,6 +503,89 @@ String generateRandomString(int length) {
 
 //final WebViewCookieManager cookieManager = WebViewCookieManager();
 
+
+class AuthTokenProvider {
+  final FlutterSecureStorage secureStorage = FlutterSecureStorage();
+  static const _accessTokenKey = 'ACCESS_TOKEN';
+  static const _refreshTokenKey = 'REFRESH_TOKEN';
+  static const _expiryTimeKey = 'EXPIRY_TIME';
+
+  Future<void> storeTokenData(String accessToken, String refreshToken, int expiresIn) async {
+    final expiryTime = DateTime.now().add(Duration(seconds: expiresIn)).toIso8601String();
+    await secureStorage.write(key: _accessTokenKey, value: accessToken);
+    await secureStorage.write(key: _refreshTokenKey, value: refreshToken);
+    await secureStorage.write(key: _expiryTimeKey, value: expiryTime);
+  }
+
+  Future<String?> getAccessToken() async {
+    final expiryTimeString = await secureStorage.read(key: _expiryTimeKey);
+    final expiryTime = DateTime.tryParse(expiryTimeString ?? '');
+    final currentTime = DateTime.now();
+
+    // If the token is expired or about to expire, refresh it
+    if (expiryTime != null && currentTime.isAfter(expiryTime.subtract(Duration(minutes: 5)))) {
+      final refreshToken = await secureStorage.read(key: _refreshTokenKey);
+      if (refreshToken != null) {
+        final newTokenData = await refreshAccessToken(refreshToken);
+        if (newTokenData != null && newTokenData.isNotEmpty) {
+          // Store new tokens and return the new access token
+          await storeTokenData(newTokenData['access_token'], newTokenData['refresh_token'], newTokenData['expires_in']);
+          return newTokenData['access_token'];
+        } else {
+          // Handle token refresh error, possibly by logging out the user or asking them to re-authenticate
+          return null;
+        }
+      }
+    }
+
+    // If the token is still valid, return it
+    return await secureStorage.read(key: _accessTokenKey);
+  }
+
+  Future<void> clearTokens() async {
+    await secureStorage.delete(key: _accessTokenKey);
+    await secureStorage.delete(key: _refreshTokenKey);
+    await secureStorage.delete(key: _expiryTimeKey);
+  }
+
+  Future<bool> isAccessTokenExpired() async {
+  final expiryTimeString = await secureStorage.read(key: _expiryTimeKey);
+  if (expiryTimeString == null) return true; // No expiry time stored, assume it's expired
+  final expiryTime = DateTime.tryParse(expiryTimeString);
+  final currentTime = DateTime.now();
+  // Consider the token expired if the current time is 5 minutes or less from expiry
+  return expiryTime == null || currentTime.isAfter(expiryTime.subtract(Duration(minutes: 5)));
+  }
+
+  Future<String?> getRefreshToken() async {
+  return await secureStorage.read(key: _refreshTokenKey);
+  }
+
+
+  Future<Map<String, dynamic>?> refreshAccessToken(String refreshToken) async {
+    // Call your existing refreshAccessToken function here
+    return await refreshAccessToken(refreshToken);
+  }
+}
+
+void showErrorDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Authentication Error'),
+      content: Text('Unable to retrieve access token. Please log in again.'),
+      actions: <Widget>[
+        TextButton(
+          child: Text('OK'),
+          onPressed: () {
+            Navigator.of(context).pop(); // Close the dialog
+            // Navigate to login screen or another appropriate action
+          },
+        ),
+      ],
+    ),
+  );
+}
 
 
 

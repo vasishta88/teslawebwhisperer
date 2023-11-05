@@ -1,0 +1,10 @@
+<actions>
+    <action intentName="actions.intent.SET_TEMPERATURE">
+        <fulfillment urlTemplate="teslawebwhisperer://setTemperature?temperature={temperature}">
+            <parameter-mapping
+                intentParameter="temperature"
+                urlParameter="temperature" />
+        </fulfillment>
+        <parameter name="temperature" type="SchemaOrg_Number"/>
+    </action>
+</actions>

@@ -18,6 +18,8 @@ import 'package:teslawebwhisperer/widgets.dart';
 
 import '../services/app_routes.dart';
 
+import 'package:uni_links/uni_links.dart';
+
 class HomeScreen extends StatefulWidget {
   static const id = "/home";
 
@@ -49,6 +51,28 @@ class _HomeScreenState extends State<HomeScreen> {
   bool selectedLightning = false;
   bool selectedKey = false;
   bool selectedPerson = false;
+
+  //Deep Link and Google Assistant
+
+  void initUniLinks() async {
+    // Attach a listener to the links stream
+    linkStream.listen((String? link) {
+      // Parse the link and handle it within your app
+      if (link != null) {
+        Uri uri = Uri.parse(link);
+        if (uri.host == 'setTemperature') {
+          // Extract the temperature parameter and handle the action
+          var temperature = uri.queryParameters['temperature'];
+          if (temperature != null) {
+            setTemperature(widget.accessToken, widget.vehicleID, double.parse(temperature), double.parse(temperature));
+          }
+        }
+      }
+    }, onError: (err) {
+      // Handle exception by warning the user their action failed
+    });
+  }
+
 
   //String? vehicleID;
 

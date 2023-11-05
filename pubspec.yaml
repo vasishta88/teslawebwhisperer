@@ -45,6 +45,8 @@ dependencies:
   neumorphic_ui: ^1.0.0
   scaffold_gradient_background: ^1.0.3+1
   geocoding: ^2.0.0
+  uni_links: ^0.5.1
+  flutter_secure_storage: ^9.0.0
 
 dev_dependencies:
   flutter_test:
