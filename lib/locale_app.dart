@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:teslawebwhisperer/screens/lock_screen.dart';
 import 'package:teslawebwhisperer/services/local_services.dart';
 import 'main.dart';
 
@@ -50,7 +51,7 @@ class LocaleApp extends StatelessWidget {
             ),
             routes: AppRoutes.routes,
             // You can set the home or initialRoute property as needed
-            home: MyApp(), // or you can use 'initialRoute: "/yourRouteName"'
+            home: LockScreen(), // or you can use 'initialRoute: "/yourRouteName"'
           );
         },
       ),

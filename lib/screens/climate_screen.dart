@@ -8,10 +8,12 @@ import 'package:teslawebwhisperer/services/app_routes.dart';
 import 'package:teslawebwhisperer/services/constants/svg_icon.dart';
 import 'package:teslawebwhisperer/services/themes/colors.dart';
 import 'package:teslawebwhisperer/views/components/custom_wthbutton.dart';
+import '../main.dart';
 import '../services/themes/texts.dart';
 import '../views/components/circular_slider.dart';
 import '../views/components/custom_appbar_button.dart';
 import '../views/components/custom_buttombar.dart';
+import '../views/components/custom_button_app_bar.dart';
 import '../views/components/custom_button_slider.dart';
 import '../tesla_service.dart';
 
@@ -250,15 +252,17 @@ class _ClimateScreenState extends State<ClimateScreen> {
                       const Spacer(),
                       Texts.strClimate.tr(),
                       const Spacer(),
-                      CustomButton(
-                        widget: Center(
-                          child: SvgIcon.person.copyWith(
-                            newWidth: 13,
-                            newHeight: 22,
-                            newColor: AppColors.textGrey60,
-                          ),
-                        ),
-                      ),
+                      CustomButtonAppBar(widget: SvgIcon.off, onPressed: () async {
+                        // Create an instance of AuthTokenProvider
+                        final authTokenProvider = AuthTokenProvider();
+                        // Call the method to clear tokens
+                        await authTokenProvider.clearTokens();
+                        // Navigate to the TeslaLoginScreen
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => TeslaLoginScreen()),
+                        );
+                      }),
                     ],
                   ),
                 ),

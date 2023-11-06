@@ -2,7 +2,9 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:teslawebwhisperer/screens/charge_screen.dart';
 import 'package:teslawebwhisperer/services/app_routes.dart';
+import 'package:teslawebwhisperer/services/constants/svg_icon.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -99,7 +101,7 @@ class _TeslaLoginScreenState extends State<TeslaLoginScreen> {
     );
 
     //todo: remove later and check if refresh token works
-    cookieManager.clearCookies();
+   cookieManager.clearCookies();
 
     // Initialize the WebViewController and other logic here
     controller = WebViewController()
@@ -213,97 +215,62 @@ class _TeslaLoginScreenState extends State<TeslaLoginScreen> {
 
               Map<String, dynamic>? tokenData = await exchangeAuthorizationCodeForBearerToken(authorizationCode!, codeVerifier);
               if (tokenData != null) {
-                final accessToken = tokenData['access_token'];
-                final refreshToken = tokenData['refresh_token'];
-                final expiresIn = tokenData['expires_in'].toInt(); // Make sure this is an integer
+                final accessToken = tokenData['accessToken'];
+                final refreshToken = tokenData['refreshToken'];
+                final expiresIn = tokenData['expiresIn']; // Make sure this is an integer
                 print('accessToken: $accessToken');
                 print('refreshToken: $refreshToken');
                 print('expiresIn: $expiresIn');
 
                 if (accessToken is String && refreshToken is String && expiresIn is int) {
                   await authTokenProvider.storeTokenData(accessToken, refreshToken, expiresIn);
-                } else {
-                  // Handle the situation where the types aren't what's expected
-                }
-              } else {
-                // Handle the error if tokenData is null
-              }
+                  // Proceed to fetch user and vehicle details
+
+                  Map<String, dynamic> userDetails = await getUserDetails(accessToken!); //todo: Get refresh token before this if access token expired and handle MFA later
+                  print('User Details: $userDetails');
+                  Map<String, dynamic> vehicleDetails = await getVehicles(
+                      accessToken!); //todo: Get refresh token before this if access token expired
+                  print('Vehicle Details: $vehicleDetails');
+                  String vehicleID = vehicleDetails['response'][0]['id']
+                      .toString();
+                  print('Vehicle ID: $vehicleID');
+                  await wakeUp(accessToken!, vehicleID);
+                  Map<String, dynamic> vehicleData = await getVehicleData(
+                      accessToken!, vehicleID);
+                  print('Vehicle Data: $vehicleData');
+                  Future<double?> vehicleRange = getVehicleRange(vehicleData);
+                  print('Vehicle range: $vehicleRange');
+                  //todo: handle if accesstoken is null and show an intro error screen
 
 
-              // Only proceed if accessToken is not null and not expired
-              String? currentAccessToken = await authTokenProvider.getAccessToken();
-
-              // Check if the access token is expired or about to expire
-              if (currentAccessToken == null || await authTokenProvider.isAccessTokenExpired()) {
-                // If expired or null, refresh it
-                final String? refreshToken = await authTokenProvider.getRefreshToken();
-                if (refreshToken != null) {
-                  final newTokenData = await refreshAccessToken(refreshToken);
-                  if (newTokenData != null && newTokenData['access_token'] is String) {
-                    // Update the stored token data with the new tokens
-                    await authTokenProvider.storeTokenData(
-                      newTokenData['access_token'],
-                      newTokenData['refresh_token'],
-                      newTokenData['expires_in'],
-                    );
-                    // Use the new access token
-                    currentAccessToken = newTokenData['access_token'];
-                  } else {
-                    // Handle failure to refresh the access token
-                    showErrorDialog(context);
-                    return NavigationDecision.prevent;
-                  }
-                } else {
-                  // Refresh token is null, which should not happen, show an error dialog
-                  showErrorDialog(context);
-                  return NavigationDecision.prevent;
-                }
-              }
-
-
-                // accessToken is not null, safe to proceed.
-
-
-                Map<String, dynamic> userDetails = await getUserDetails(accessToken!); //todo: Get refresh token before this if access token expired and handle MFA later
-                print('User Details: $userDetails');
-                Map<String, dynamic> vehicleDetails = await getVehicles(
-                    accessToken!); //todo: Get refresh token before this if access token expired
-                print('Vehicle Details: $vehicleDetails');
-                String vehicleID = vehicleDetails['response'][0]['id']
-                    .toString();
-                print('Vehicle ID: $vehicleID');
-                await wakeUp(accessToken!, vehicleID);
-                Map<String, dynamic> vehicleData = await getVehicleData(
-                    accessToken!, vehicleID);
-                print('Vehicle Data: $vehicleData');
-                Future<double?> vehicleRange = getVehicleRange(vehicleData);
-                print('Vehicle range: $vehicleRange');
-                //todo: handle if accesstoken is null and show an intro error screen
-
-
-                // Then navigate to a new screen
-                /*Navigator.push(
+                  // Then navigate to a new screen
+                  /*Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => HomeScreen(accessToken: accessToken)),
               );
 
                */
 
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        HomeScreen(
-                          accessToken: accessToken!,
-                          userDetails: userDetails,
-                          vehicleData: vehicleData,
-                          vehicleID: vehicleID,
-                        ),
-                  ),
-                );
-
-
-
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          HomeScreen(
+                            accessToken: accessToken!,
+                            userDetails: userDetails,
+                            vehicleData: vehicleData,
+                            vehicleID: vehicleID,
+                          ),
+                    ),
+                  );
+                } else {
+                  // Handle the situation where the types aren't what's expected
+                  showErrorDialog(context);
+                }
+              } else {
+                // Handle the error if tokenData is null
+                showErrorDialog(context);
+              }
 
               return NavigationDecision.prevent; // Prevent loading the callback URL
             }
@@ -315,6 +282,7 @@ class _TeslaLoginScreenState extends State<TeslaLoginScreen> {
 
   }
 
+  /*
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -324,7 +292,23 @@ class _TeslaLoginScreenState extends State<TeslaLoginScreen> {
       body: WebViewWidget(controller: controller),
 
     );
+  }*/
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF232527), // Use the same background color
+      body: SafeArea( // SafeArea is used to avoid notches and the status bar
+        child: WebViewWidget(controller: controller),
+      ),
+    );
   }
+
+
+
+
+
+
 }
 
 Future<String?> obtainAuthorizationCode(Map<String, dynamic> hiddenInputs, String cookies, String email, String password, String codeChallenge) async {
@@ -586,6 +570,8 @@ void showErrorDialog(BuildContext context) {
     ),
   );
 }
+
+
 
 
 

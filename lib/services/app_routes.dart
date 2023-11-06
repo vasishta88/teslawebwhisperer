@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:teslawebwhisperer/main.dart';
 import 'package:teslawebwhisperer/screens/charge_screen.dart';
 import 'package:teslawebwhisperer/screens/climate_screen.dart';
 import 'package:teslawebwhisperer/screens/control_screen.dart';
@@ -73,6 +74,7 @@ class AppRoutes {
 
     LockScreen.id: (context) => const LockScreen(),
     IntroScreen.id: (context) => const IntroScreen(),
+    //TeslaLoginScreen.id: (context) => const TeslaLoginScreen(),
   };
 
   static void pushReplacementLockScreen(BuildContext context) {

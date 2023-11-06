@@ -16,6 +16,7 @@ import 'package:teslawebwhisperer/services/themes/text_styles.dart';
 import 'package:teslawebwhisperer/tesla_service.dart';
 import 'package:teslawebwhisperer/widgets.dart';
 
+import '../main.dart';
 import '../services/app_routes.dart';
 
 import 'package:uni_links/uni_links.dart';
@@ -159,7 +160,17 @@ class _HomeScreenState extends State<HomeScreen> {
         leadingWidth: 140,
         actions: [Padding(
           padding: const EdgeInsets.only(right: 22.0),
-          child: CustomButtonAppBar(widget: SvgIcon.person, onPressed: () {}),
+          child: CustomButtonAppBar(widget: SvgIcon.off, onPressed: () async {
+            // Create an instance of AuthTokenProvider
+            final authTokenProvider = AuthTokenProvider();
+            // Call the method to clear tokens
+            await authTokenProvider.clearTokens();
+            // Navigate to the TeslaLoginScreen
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => TeslaLoginScreen()),
+            );
+          }),
         )],
       ),
       extendBody: true,

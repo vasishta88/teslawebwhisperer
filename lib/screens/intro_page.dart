@@ -9,6 +9,8 @@ import 'package:teslawebwhisperer/services/themes/colors.dart';
 import 'package:teslawebwhisperer/services/themes/text_styles.dart';
 import 'package:teslawebwhisperer/views/components/custom_button_app_bar.dart';
 
+import '../main.dart';
+
 class IntroScreen extends StatefulWidget {
   static const id = "/intro";
   const IntroScreen({super.key});
@@ -38,10 +40,17 @@ class _IntroScreenState extends State<IntroScreen> {
                 Expanded(
                   child: Align(
                     alignment: Alignment.topRight,
-                    child: CustomButtonAppBar(
-                      widget: SvgIcon.settings,
-                      onPressed: () {},
-                    ),
+                    child: CustomButtonAppBar(widget: SvgIcon.off, onPressed: () async {
+                      // Create an instance of AuthTokenProvider
+                      final authTokenProvider = AuthTokenProvider();
+                      // Call the method to clear tokens
+                      await authTokenProvider.clearTokens();
+                      // Navigate to the TeslaLoginScreen
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => TeslaLoginScreen()),
+                      );
+                    }),
                   ),
                 ),
                 Expanded(
